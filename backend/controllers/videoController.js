@@ -126,14 +126,6 @@ const getVideo = async (req, res) => {
 // like / unlike video
 const likeVideo = async (req, res) => {
     try {
-        const token = req.headers.authorization.split(" ")[1];
-
-        const tokenData = jwt.verify(
-            token,
-            process.env.SEC_KEY
-        );
-
-        const userId = tokenData._id;
 
         const video = await Video.findById(req.params.videoId);
 
@@ -143,7 +135,42 @@ const likeVideo = async (req, res) => {
             });
         }
 
-        const isLiked = video.likedBy.includes(userId);
+        // Check whether token is provided
+        const authHeader = req.headers.authorization;
+
+        // no token
+
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+
+            return res.status(200).json({
+                msg: "Login required to like video",
+
+                video: video,
+
+                likedStatus: false,
+                dislikedStatus: false,
+                subscribe: false
+            });
+        }
+
+        // with token
+
+        const token = authHeader.split(" ")[1];
+
+        const tokenData = jwt.verify(
+            token,
+            process.env.SEC_KEY
+        );
+
+        const userId = tokenData._id;
+
+        const isLiked = video.likedBy.some(
+            id => id.toString() === userId.toString()
+        );
+
+        const isDisliked = video.dislikedBy.some(
+            id => id.toString() === userId.toString()
+        );
 
         if (isLiked) {
 
@@ -157,7 +184,7 @@ const likeVideo = async (req, res) => {
         } else {
 
             // Remove dislike if already disliked
-            if (video.dislikedBy.includes(userId)) {
+            if (isDisliked) {
 
                 video.dislikedBy = video.dislikedBy.filter(
                     id => id.toString() !== userId.toString()
@@ -173,19 +200,30 @@ const likeVideo = async (req, res) => {
 
         await video.save();
 
+        // Status after operation
+        const updatedLikedStatus = !isLiked;
+
         res.status(200).json({
-            msg: isLiked
-                ? "Video unliked successfully"
-                : "Video liked successfully",
+
+            msg: updatedLikedStatus
+                ? "Video liked successfully"
+                : "Video unliked successfully",
+
+            video: video,
 
             likeCount: video.likeCount,
             dislikeCount: video.dislikeCount,
 
-            // Send updated status
-            isLiked: !isLiked
+            likedStatus: updatedLikedStatus,
+
+            // If video is liked, it cannot be disliked
+            dislikedStatus: false,
+
+            subscribe: false
         });
 
     } catch (err) {
+
         console.log(err);
 
         res.status(500).json({
@@ -194,17 +232,8 @@ const likeVideo = async (req, res) => {
     }
 };
 
-// dislike / remove dislike
 const dislikeVideo = async (req, res) => {
     try {
-        const token = req.headers.authorization.split(" ")[1];
-
-        const tokenData = jwt.verify(
-            token,
-            process.env.SEC_KEY
-        );
-
-        const userId = tokenData._id;
 
         const video = await Video.findById(req.params.videoId);
 
@@ -214,8 +243,43 @@ const dislikeVideo = async (req, res) => {
             });
         }
 
-        // Check if user already disliked
-        const isDisliked = video.dislikedBy.includes(userId);
+        // Check whether token is provided
+        const authHeader = req.headers.authorization;
+
+        // no token
+        
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+
+            return res.status(200).json({
+                msg: "Login required to dislike video",
+
+                video: video,
+
+                likedStatus: false,
+                dislikedStatus: false,
+                subscribe: false
+            });
+        }
+
+        // with token
+
+        const token = authHeader.split(" ")[1];
+
+        const tokenData = jwt.verify(
+            token,
+            process.env.SEC_KEY
+        );
+
+        const userId = tokenData._id;
+
+        // Check current status
+        const isDisliked = video.dislikedBy.some(
+            id => id.toString() === userId.toString()
+        );
+
+        const isLiked = video.likedBy.some(
+            id => id.toString() === userId.toString()
+        );
 
         if (isDisliked) {
 
@@ -228,8 +292,8 @@ const dislikeVideo = async (req, res) => {
 
         } else {
 
-            // Remove like if user already liked
-            if (video.likedBy.includes(userId)) {
+            // Remove like if already liked
+            if (isLiked) {
 
                 video.likedBy = video.likedBy.filter(
                     id => id.toString() !== userId.toString()
@@ -245,19 +309,29 @@ const dislikeVideo = async (req, res) => {
 
         await video.save();
 
+        // Updated status after operation
+        const updatedDislikedStatus = !isDisliked;
+
         res.status(200).json({
-            msg: isDisliked
-                ? "Dislike removed successfully"
-                : "Video disliked successfully",
+
+            msg: updatedDislikedStatus
+                ? "Video disliked successfully"
+                : "Dislike removed successfully",
+
+            video: video,
 
             likeCount: video.likeCount,
             dislikeCount: video.dislikeCount,
 
-            // Updated dislike status
-            isDisliked: !isDisliked
+            likedStatus: false,
+
+            dislikedStatus: updatedDislikedStatus,
+
+            subscribe: false
         });
 
     } catch (err) {
+
         console.log(err);
 
         res.status(500).json({
