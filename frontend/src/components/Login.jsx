@@ -12,7 +12,7 @@ const Login = () => {
   const {setLoginState} = useOutletContext()
 
   const api = import.meta.env.VITE_API
-  // console.log(api)
+  console.log(api)
 
   const submitHandler = async(e)=>{
    try

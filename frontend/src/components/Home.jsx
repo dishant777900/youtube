@@ -15,7 +15,7 @@ const Home = () => {
   }, [])
 
   const getVideo = async () => {
-    const res = await axios.get(`${api}/video/allvideo`)
+    const res = await axios.get(`${api}/video/allVideo`)
     console.log(res.data.videos)
     setVideos(res.data.videos.reverse())
 

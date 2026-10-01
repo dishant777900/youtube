@@ -20,13 +20,13 @@
 .logo-text
 {
   color: white;
-  font-size: 30px;
+  font-size: 25px;
 }
 
 .logo
 {
   background-color: red;
-  padding: 20px;
+  padding: 10px;
   border-radius: 50%;
 }
 
