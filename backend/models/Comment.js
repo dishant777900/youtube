@@ -1,53 +1,59 @@
-const mongoose = require('mongoose')
-const { video } = require('../config/cloudinary')
+const mongoose = require("mongoose");
 
-const commentSchema = new mongoose.Schema({
-    videoId:{
-        type:mongoose.Schema.Types.ObjectId,
-        ref:'video',
-        required:true
+const commentSchema = new mongoose.Schema(
+  {
+    videoId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Video",
+      required: true,
     },
 
-    userId:{
-        type:mongoose.Schema.Types.ObjectId,
-        ref:'user',
-        required:true
-    },
-    
-    commentText:{
-        type:String,
-        required:true,
-        trim:true
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
 
-    likedBy:[{
-        type:mongoose.Schema.Types.ObjectId,
-        ref:'user'
-    }],
-
-    dislikedBy:[{
-        type:mongoose.Schema.Types.ObjectId,
-        ref:'user'
-    }],
-
-    likeCount:{
-        type:Number,
-        default:0,
-        min:0
+    commentText: {
+      type: String,
+      required: true,
+      trim: true,
     },
 
-    dislikedCount:{
-        type:Number,
-        default:0,
-        min:0
+    likedBy: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+
+    dislikedBy: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+
+    likeCount: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
 
-    publishedAt:{
-        type:Date,
-        default:Date.now
+    dislikeCount: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
 
-},
-{
-    timestamps:true
-})
+    publishedAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+module.exports = mongoose.model("Comment", commentSchema);

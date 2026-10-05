@@ -26,7 +26,7 @@ const Video = () => {
 
   const getVideoById = async () => {
     try {
-      const d = await axios.get(`${api}/video/${videoId.id}`)
+      const d = await axios.get(`${api}/video/get-video/${videoId.id}`)
       console.log('video', d.data.video)
       setVideo(d.data.video)
 
