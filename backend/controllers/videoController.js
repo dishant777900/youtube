@@ -44,20 +44,29 @@ const upload = async(req,res)=>{
 }
 
 // get all video
-const allVideo = async(req,res)=>{
-    try{
-        const allvideos=await Video.find().select("_id title thumbnailUrl userId  publishedAt").populate('userId',"fullName imageUrl")
-    res.status(200).json({
-      videos:allVideos
-    })
+const allVideo = async (req, res) => {
+    try {
+
+        const allvideos = await Video.find()
+            .select("_id title thumbnailUrl uploadedBy publishedAt")
+            .populate(
+                "uploadedBy",
+                "channelName profilePicUrl"
+            );
+
+        res.status(200).json({
+            videos: allvideos
+        });
+
+    } catch (err) {
+
+        console.log(err);
+
+        res.status(500).json({
+            error: err.message
+        });
     }
-    catch(err){
-        console.log(err)
-    res.status(500).json({
-      error:err
-    })
-    }
-}
+};
 
 // get video by id
 const getVideo = async (req, res) => {
