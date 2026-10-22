@@ -1,110 +1,129 @@
-import axios from 'axios'
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState } from "react"
+import axios from "axios"
+import { Link, useNavigate } from "react-router-dom"
 import swal from 'sweetalert'
-import loader from '../assets/loader.gif'
-import ReactQuill from "react-quill-new";
-import "react-quill-new/dist/quill.snow.css";
 
 const AddVideo = () => {
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [category, setCategory] = useState('education')
-  const [tags, setTags] = useState('')
-  const [video, setVideo] = useState(null)
-  const [thumbnail, setThumbnail] = useState(null)
-  const [thumbnailUrl, setThumbnailUrl] = useState('')
-  const [thumbnailName, setThumbnailName] = useState('')
-  const [videoName, setVideoName] = useState('')
-  const [isLoading, setLoading] = useState(false)
-  const [content, setContent] = useState("");
+    const [title, setTitle] = useState("")
+    const [tags, setTags] = useState("")
+    const [description, setDescription] = useState("")
+    const [category, setCategory] = useState("education")
+    const [video, setVideo] = useState(null)
+    const [videoName, setVideoName] = useState(null)
+    const [isLoading, setLoading] = useState(false)
+    const navigate = useNavigate()
 
-  const api = import.meta.env.VITE_API
-  const navigate = useNavigate()
+    const [thumbnail, setThumbnail] = useState(null)
+    const [thumbnailurl, setThumbnailUrl] = useState(null)
+    const [thumbnailName, setThumbnailName] = useState(null)
 
-  const submitHandler = async (e) => {
-    try {
-      e.preventDefault()
-      // console.log(title,description,category,tags.split(','))
-      setLoading(true)
-      const videoTag = tags.split(',')
-      const formData = new FormData()
-      formData.append('title', title)
-      formData.append('description', description)
-      formData.append('tags', JSON.stringify(videoTag))
-      formData.append('category', category)
-      formData.append('video', video)
-      formData.append('thumbnail', thumbnail)
-      console.log(formData)
+    const api_base_url = import.meta.env.VITE_API_URL
 
-      const uploadedVideoRes = await axios.post(`${api}/video/upload`, formData, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'multipart/form-data'
+
+    const videoHandler = (e) => {
+        setVideo(e.target.files[0])
+        setVideoName(e.target.files[0].name)
+        console.log(video);
+        console.log(videoName);
+
+    }
+
+    const thumbnailhandler = (e) => {
+        setThumbnail(e.target.files[0])
+        setThumbnailName(e.target.files[0].name)
+        setThumbnailUrl(URL.createObjectURL(e.target.files[0]))
+        console.log(video);
+        console.log(videoName);
+
+    }
+    const submitHandler = async (e) => {
+        try {
+            e.preventDefault()
+            setLoading(true)
+            const token = localStorage.getItem("token");
+            const formData = new FormData()
+            formData.append("title", title)
+            formData.append("description", description)
+            formData.append("tags", tags);
+            formData.append("category", category);
+            formData.append("video", video)
+            formData.append("thumbnail", thumbnail)
+            console.log("TOKEN:", token);
+
+            await axios.post(`${api_base_url}/video/upload`, formData, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+            navigate('/')
+            setLoading(false)
+
+            swal({
+                text: "Video uploaded!",
+                icon: "success",
+                button: "Ok!",
+
+            });
+
         }
-      })
+        catch (err) {
+            console.log(err);
+            setLoading(false)
+            swal({
+                text: "Something is wrong!",
+                icon: "error",
+                button: "Ok",
+            });
 
-      console.log(uploadedVideoRes)
-      setLoading(false)
-      swal("Uploaded!", "Video Uploaded!", "Success");
-      navigate('/')
+        }
+
     }
 
-    catch (err) {
-      console.log(err)
-      setLoading(false)
-      swal("Error!", "Something is Wrong!", "Error");
-    }
+    return (
 
-  }
 
-  const thumbnailHandler = (e) => {
-    setThumbnail(e.target.files[0])
-    setThumbnailUrl(URL.createObjectURL(e.target.files[0]))
-    setThumbnailName(e.target.files[0].name)
-    console.log(thumbnailUrl, thumbnailName, thumbnail)
-  }
+        <div className="form-wrapper">
 
-  const videoHandler = (e) => {
-    setVideo(e.target.files[0])
-    setVideoName(e.target.files[0].name)
-    console.log(video)
-  }
+            <form className="form" onSubmit={submitHandler}>
+                <p className="form-heading">Upload video</p>
 
-  return (
-    <div className='form-wrapper'>
-      {isLoading ? <img className='loader' src={loader} />
-        :
-        <form className='form' onSubmit={submitHandler}>
-          <p className='form-heading'>Upload Video</p>
-          <input id='videoInput' onChange={videoHandler} type="file" />
-          <div className='btn-group'>
-            <p>{videoName}</p>
-            <button className='video-input-btn' type='button' onClick={() => { document.getElementById('videoInput').click() }}><i className="fa-solid fa-upload"></i> Chose Video</button>
-          </div>
-          <input className='form-input' onChange={(e) => { setTitle(e.target.value) }} value={title} type="text" name="title" placeholder='Title' />
-          <ReactQuill className='description-editor'
-            theme="snow"
-            value={description}
-            onChange={setDescription}
-          />
-          <br></br>
-          {/* <textarea className='form-input' onChange={(e)=>{setDescription(e.target.value)}} value={description} name='description' placeholder='Description'></textarea> */}
-          <select className='form-input' onChange={(e) => { setCategory(e.target.value) }} value={category}>
-            <option value="education">Education</option>
-            <option value="technology">Technology</option>
-            <option value="sports">Sports</option>
-            <option value="science and technology">Science and Technology</option>
-            <option value="other">Other</option>
-          </select>
-          <textarea className='form-input' onChange={(e) => { setTags(e.target.value) }} name='tags' placeholder='tags'></textarea>
+                <input type="file" id="video-input" onChange={videoHandler} />
+                <div className="video-upload-wrapper">
+                    <p>{videoName}</p>
+                    <button type="button" onClick={() => { document.getElementById('video-input').click() }}>Upload video</button>
 
-          <input type="file" onChange={thumbnailHandler} />
-          <button className='submit-btn' type='submit'>Upload Video</button>
-        </form>
-      }
-    </div>
-  )
+                </div>
+
+                <input type="file" id="thumbnail-input" onChange={thumbnailhandler} />
+                <div className="thumbnail-upload-wrapper">
+                    <button type="button" onClick={() => { document.getElementById('thumbnail-input').click() }}>Upload thumbnail</button>
+                    <div>
+                        {thumbnailurl && <img src={thumbnailurl} alt="thumbnailImage" className="thumbanial-image-preview" />}
+                        <p>{thumbnailName}</p>
+                    </div>
+
+
+                </div>
+
+                <input className="form-input" onChange={(e) => { setTitle(e.target.value) }} type="text" placeholder="title" />
+
+                <textarea className="form-input" onChange={(e) => { setDescription(e.target.value) }} maxLength={2000} minLength={20} placeholder="descritption" />
+
+                <input className="form-input" onChange={(e) => { setTags(e.target.value) }} placeholder="tags" />
+
+                <select className="form-input" onChange={(e) => { setCategory(e.target.value) }}>
+                    <option value={'Education'}>Education
+                    </option>
+                    <option value={'Fashion'}>Fashion</option>
+                    <option value={'Comedy'}>Comedy</option>
+                    <option value={'Food'}>Food</option>
+                    <option value={'Technology'}>Technology</option>
+                    <option value={'Gaming'}>Gaming</option>
+                    <option value={'Other'}>Other</option>
+                </select>
+                <button type="submit" className="submit-btn" >{isLoading && <span> <i className="fa-solid fa-spinner fa-spin-pulse"></i></span>} Upload</button>
+            </form>
+        </div>
+    )
 }
-
 export default AddVideo

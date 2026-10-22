@@ -11,21 +11,7 @@ const videoSchema = new mongoose.Schema(
     description: {
       type: String,
       default: "",
-      trim: true,
     },
-
-    category: {
-      type: String,
-      default: "Other",
-      trim: true,
-    },
-
-    tags: [
-      {
-        type: String,
-        trim: true,
-      },
-    ],
 
     videoUrl: {
       type: String,
@@ -58,6 +44,7 @@ const videoSchema = new mongoose.Schema(
       required: true,
     },
 
+    // Like information
     likeCount: {
       type: Number,
       default: 0,
@@ -70,6 +57,7 @@ const videoSchema = new mongoose.Schema(
       },
     ],
 
+    // Dislike information
     dislikeCount: {
       type: Number,
       default: 0,
