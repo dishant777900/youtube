@@ -1,8 +1,13 @@
 import { useEffect, useState } from "react"
 import axios from "axios"
-import profile from "../assets/profile.png"
+import profile from "../assets/profile.webp"
 import swal from 'sweetalert'
 import { useNavigate } from "react-router-dom"
+const daysAgo = (date) => {
+    const days = Math.floor((Date.now() - new Date(date)) / (1000 * 60 * 60 * 24))
+    return days > 0 ? `${days} day${days > 1 ? 's' : ''} ago` : "Today"
+}
+
 const Home = () => {
     const [allVideo, setAllvideo] = useState([])
     const api_base_url = import.meta.env.VITE_API_URL
@@ -19,7 +24,6 @@ const Home = () => {
             setAllvideo((videos.data.videos || []).slice().reverse())
         }
         catch (err) {
-
             swal({
                 text: "Something is wrong!",
                 icon: "error",
@@ -37,21 +41,12 @@ const Home = () => {
                 {
                     allVideo.map(video => {
                         return (
-                            <div className='video-card' key={video._id} onClick={() => { navigate(`video/${video._id}`) }} >
-
-
-
+                            <div className='video-card' key={video._id} onClick={() => { navigate(`/video/${video._id}`) }} >
                                 <img className="video-thumbnail" src={video.thumbnailUrl}
                                     alt="thumbnail" />
 
-
-
                                 <div className='video-detail'>
                                     <h1>{video.title}</h1>
-                                    <p>{(video.description || "").slice(0, 100)}
-                                        {(video.description || "").length > 100 && "......"}
-                                    </p>
-                                    <p className="category">{video.category || ""}</p>
                                     <div>
                                         <div className='profile-box'>
                                             <img
@@ -66,9 +61,8 @@ const Home = () => {
                                             <p>{video.uploadedBy?.channelName || "Unknown channel"}</p>
                                         </div>
                                         <div>
-                                            <p>{Math.floor((Date.now() - new Date(video.createdAt)) / (1000 * 60 * 60 * 24)) != 0 ? Math.floor((Date.now() - new Date(video.createdAt)) / (1000 * 60 * 60 * 24)) + " day ago" : "Today"}</p>
-                                            <p >{video.views || 0} views</p>
-
+                                            <p>{daysAgo(video.publishedAt)}</p>
+                                            <p>{video.views || 0} views</p>
                                         </div>
                                     </div>
                                 </div>

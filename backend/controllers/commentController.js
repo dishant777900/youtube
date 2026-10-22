@@ -1,5 +1,6 @@
 const Comment = require('../models/Comment');
 const jwt = require('jsonwebtoken');
+const Video = require('../models/Video');
 
 // Add comment
 const addComment = async (req, res) => {
@@ -33,7 +34,9 @@ const getComments = async (req, res) => {
     try {
         const comments = await Comment.find({
             videoId: req.params.videoId
-        }).select("commentText likeCount dislikeCount publishedAt");
+        })
+            .select("commentText likeCount dislikeCount publishedAt userId")
+            .populate("userId", "channelName profilePicUrl");
 
         res.status(200).json({
             data: comments
@@ -55,14 +58,14 @@ const likeComment = async(req,res)=>{
         const tokenData = await jwt.verify(token,process.env.SEC_KEY)  
         const comment = await Comment.findById(req.params.commentId)
         //console.log(comment)
-        const userId = tokenData.userId
+        const userId = tokenData._id
 
-        const IsLiked = comment.likedBy.includes(userId)
+        const IsLiked = comment.likedBy.some(id => id.toString() === userId.toString())
         //console.log(IsLiked)
         if (IsLiked)
         {
             //unlike
-            comment.likedBy = comment.likedBy.filter(uId => uId !=userId)
+            comment.likedBy = comment.likedBy.filter(uId => uId.toString() !== userId.toString())
             comment.likeCount -=1
             //console.log('unlike hua')
         }
@@ -71,6 +74,10 @@ const likeComment = async(req,res)=>{
             //like
             comment.likedBy.push(userId)
             comment.likeCount +=1
+            if (comment.dislikedBy.some(id => id.toString() === userId.toString())) {
+                comment.dislikedBy = comment.dislikedBy.filter(id => id.toString() !== userId.toString())
+                comment.dislikeCount = Math.max(0, comment.dislikeCount - 1)
+            }
             //console.log('like hua')
         }
         //console.log('hiiiiiii')
@@ -94,16 +101,16 @@ const dislikeComment = async(req,res)=>{
     {
         const token = req.headers.authorization.split(" ")[1]
         const tokenData = await jwt.verify(token,process.env.SEC_KEY) 
-        const userid = tokenData.userId
+        const userid = tokenData._id
 
         const comment = await Comment.findById(req.params.commentId)
         console.log(comment)
 
-        const Isdislike = comment.dislikedBy.includes(userid)
+        const Isdislike = comment.dislikedBy.some(id => id.toString() === userid.toString())
         if(Isdislike)
         {
             //remove dislike
-            comment.dislikedBy = comment.dislikedBy.filter(uId => uId != userid)
+            comment.dislikedBy = comment.dislikedBy.filter(uId => uId.toString() !== userid.toString())
             comment.dislikeCount -=1
         }
         else
@@ -111,6 +118,10 @@ const dislikeComment = async(req,res)=>{
             //dislike
             comment.dislikedBy.push(userid)
             comment.dislikeCount +=1
+            if (comment.likedBy.some(id => id.toString() === userid.toString())) {
+                comment.likedBy = comment.likedBy.filter(id => id.toString() !== userid.toString())
+                comment.likeCount = Math.max(0, comment.likeCount - 1)
+            }
         }
 
         await comment.save()
@@ -137,15 +148,15 @@ const deleteComment = async(req,res)=>{
         const comment = await Comment.findById(req.params.commentId)
         const video = await Video.findById(comment.videoId)
 
-        //console.log(tokenData.userId)
+        //console.log(tokenData._id)
         //console.log(video)
-        const tokenUserId = tokenData.userId
+        const tokenUserId = tokenData._id
         const commenterId = comment.userId
-        const videoOwnerId = video.userId
+        const videoOwnerId = video.uploadedBy
 
         //console.log('video ka owner', videoOwnerId)
         //console.log('comment krne vala ka id ', commenterId)        
-        if (commenterId != tokenUserId && videoOwnerId != tokenUserId)
+        if (commenterId.toString() != tokenUserId.toString() && videoOwnerId.toString() != tokenUserId.toString())
         {
             console.log('hi',commenterId != tokenUserId)
             console.log('hello',videoOwnerId != tokenUserId)
@@ -183,7 +194,7 @@ const updateComment = async (req, res) => {
         }
 
         // Only the comment owner can update the comment
-        if (comment.userId.toString() !== tokenData.userId) {
+        if (comment.userId.toString() !== tokenData._id.toString()) {
             return res.status(403).json({
                 msg: "You are not authorized to update this comment"
             });

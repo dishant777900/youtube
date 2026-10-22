@@ -48,7 +48,7 @@ const allVideo = async (req, res) => {
     try {
 
         const allvideos = await Video.find()
-            .select("_id title thumbnailUrl uploadedBy publishedAt")
+            .select("_id title thumbnailUrl uploadedBy publishedAt views")
             .populate(
                 "uploadedBy",
                 "channelName profilePicUrl"

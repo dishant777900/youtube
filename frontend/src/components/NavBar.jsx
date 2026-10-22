@@ -25,10 +25,10 @@ const NavBar = () => {
                     <span className="logo">SBS</span> Tube
                 </h2>
                 <div className="menu">
-                    <Link to="" className="link">Home</Link>
-                    {isLogin && <Link to="Upload-video" className="link">Upload</Link>}
-                    {!isLogin ? <Link to="Login" className="link">Login</Link> :
-                        <div className="channelName-nav">Hey {localStorage.getItem('channelName')}</div>}
+                    <Link to="/" className="link">Home</Link>
+                    {isLogin && <Link to="/add-video" className="link">Upload</Link>}
+                    {!isLogin ? <Link to="/login" className="link">Login</Link> :
+                        <div className="channelName-nav">{localStorage.getItem('channelName')}</div>}
                     {isLogin && <div className="logout-btn" onClick={logoutHandler}><div>Logout</div> <span><i className="fa-solid fa-arrow-right-from-bracket"></i></span>
                     </div>}
 

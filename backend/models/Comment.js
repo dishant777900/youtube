@@ -1,16 +1,15 @@
 const mongoose = require('mongoose')
-const { video } = require('../config/cloudinary')
 
 const commentSchema = new mongoose.Schema({
     videoId:{
         type:mongoose.Schema.Types.ObjectId,
-        ref:'video',
+        ref:'Video',
         required:true
     },
 
     userId:{
         type:mongoose.Schema.Types.ObjectId,
-        ref:'user',
+        ref:'User',
         required:true
     },
     
@@ -22,12 +21,12 @@ const commentSchema = new mongoose.Schema({
 
     likedBy:[{
         type:mongoose.Schema.Types.ObjectId,
-        ref:'user'
+        ref:'User'
     }],
 
     dislikedBy:[{
         type:mongoose.Schema.Types.ObjectId,
-        ref:'user'
+        ref:'User'
     }],
 
     likeCount:{
@@ -36,7 +35,7 @@ const commentSchema = new mongoose.Schema({
         min:0
     },
 
-    dislikedCount:{
+    dislikeCount:{
         type:Number,
         default:0,
         min:0
@@ -51,3 +50,5 @@ const commentSchema = new mongoose.Schema({
 {
     timestamps:true
 })
+
+module.exports = mongoose.model('Comment', commentSchema)

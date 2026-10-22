@@ -2,7 +2,7 @@ import axios from "axios"
 import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import swal from "sweetalert"
-import profile from "../assets/profile.png"
+import profile from "../assets/profile.webp"
 
 const Video = () => {
 
@@ -30,23 +30,26 @@ const Video = () => {
   //     navigate('/login')
   // }
 
+  const token = localStorage.getItem('token')
+  const userId = localStorage.getItem('userId')
+  const authHeaders = { headers: { Authorization: `Bearer ${token}` } }
+  const showError = (err) => swal({
+    text: (typeof err.response?.data?.error === 'string' && err.response.data.error) || err.response?.data?.msg || "Something is wrong!",
+    icon: "error",
+    button: "Ok",
+  })
+
   const getVideo = async () => {
     try {
       setLoading(true)
-      console.log(videoId.id);
-
-      const d = await axios.get(`${api_base_url}/video/get-video/${videoId.id}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      })
-
-      console.log(d);
-      console.log('video', d.data.video)
-      setVideo(d.data.video)
-      setSubscribe(false)
-      setLike(Boolean(d.data.video.isLiked))
-      setDislike(false)
+      const d = await axios.get(`${api_base_url}/video/get-video/${videoId.id}`,
+        token ? authHeaders : undefined)
+      const v = d.data.video
+      setVideo(v)
+      // backend returns raw arrays/ids, so derive the user's state from them
+      setSubscribe((v.uploadedBy?.subscribers || []).some(id => String(id) === userId))
+      setLike(Boolean(v.isLiked))
+      setDislike((v.dislikedBy || []).some(id => String(id) === userId))
       setLoading(false)
     }
     catch (err) {
@@ -55,258 +58,141 @@ const Video = () => {
     }
   }
 
-
-  const subscribe = async (channeId) => {
+  const subscribe = async (channelId) => {
+    if (!token) return navigateToLogin()
+    const wasSubscribed = isSubscribe
     try {
-
-      if (localStorage.getItem('token') == null) {
-        navigateToLogin()
-        return
-      }
-
-      console.log(isSubscribe)
-      setSubscribe(!isSubscribe)
-      const subscribeRes = await axios.put(`${api_base_url}/user/${isSubscribe ? 'unsubscribe' : 'subscribe'}/${channeId}`, {}, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      })
-      console.log(subscribeRes);
-
+      await axios.put(`${api_base_url}/user/${wasSubscribed ? 'unsubscribe' : 'subscribe'}/${channelId}`, {}, authHeaders)
+      setSubscribe(!wasSubscribed)
+      setVideo(v => ({ ...v, subscribersCount: Math.max(0, (v.subscribersCount || 0) + (wasSubscribed ? -1 : 1)) }))
     }
-
     catch (err) {
-      setSubscribe(!isSubscribe)
-      swal({
-        text: "Something is wrong!",
-        icon: "error",
-        button: "Ok",
-      });
+      showError(err)
     }
   }
 
+  // like / dislike responses: { likeCount, dislikeCount, likedStatus, dislikedStatus }
+  const applyReaction = (data) => {
+    setLike(Boolean(data.likedStatus))
+    setDislike(Boolean(data.dislikedStatus))
+    setVideo(v => ({ ...v, likeCount: data.likeCount, dislikeCount: data.dislikeCount }))
+  }
+
   const likeHandler = async () => {
+    if (!token) return navigateToLogin()
     try {
-
-      if (localStorage.getItem('token') == null) {
-        navigateToLogin()
-        return
-      }
-      setLike(!isLike)
-      setDislike(false)
-      const likeRes = await axios.post(`${api_base_url}/video/likeVideo/${videoId.id}`, {},
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        }
-      )
-      console.log(likeRes)
-
+      const res = await axios.post(`${api_base_url}/video/likeVideo/${videoId.id}`, {}, authHeaders)
+      applyReaction(res.data)
     }
     catch (err) {
-      setLike(!isLike)
-      swal({
-        text: "Something is wrong!",
-        icon: "error",
-        button: "Ok",
-      });
+      showError(err)
     }
   }
 
   const dislikeHandler = async () => {
+    if (!token) return navigateToLogin()
     try {
-      if (localStorage.getItem('token') == null) {
-        navigateToLogin()
-        return
-      }
-      setLike(false)
-      setDislike(!isDislike)
-      const dislikeRes = await axios.post(`${api_base_url}/video/dislike/${videoId.id}`, {},
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        }
-      )
-      console.log(dislikeRes)
-
+      const res = await axios.post(`${api_base_url}/video/dislike/${videoId.id}`, {}, authHeaders)
+      applyReaction(res.data)
     }
     catch (err) {
-      setLike(!isDislike)
-      swal({
-        text: "Something is wrong!",
-        icon: "error",
-        button: "Ok",
-      });
+      showError(err)
     }
   }
 
   const addComment = async () => {
+    if (!token) return navigateToLogin()
+    if (!comment.trim()) return
     try {
-      if (localStorage.getItem('token') == null) {
-        navigateToLogin()
-        return
-      }
-      const token = localStorage.getItem('token')
       setcommentLoading(true)
-      await axios.post(`${api_base_url}/comment/add-comment/${videoId.id}`, { comment: comment }, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      })
+      await axios.post(`${api_base_url}/comment/add-comment/${videoId.id}`, { comment }, authHeaders)
       setcommentLoading(false)
-      await swal("New Comment!", "New Comment Added!", "success");
       setComment('')
       getComment()
     }
     catch (err) {
       setcommentLoading(false)
-      swal({
-        text: "Something is wrong!",
-        icon: "error",
-        button: "Ok",
-      });
+      showError(err)
     }
   }
 
   const getComment = async () => {
     try {
-      const commentRes = await axios.get(`${api_base_url}/comment/${videoId.id}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      })
+      const commentRes = await axios.get(`${api_base_url}/comment/${videoId.id}`)
       setCommentList((commentRes.data.data || []).slice().reverse())
     }
     catch (err) {
-      swal({
-        text: "Something is wrong!",
-        icon: "error",
-        button: "Ok",
-      });
+      console.log(err)
     }
   }
 
+  // The backend only returns a comment's userId (if selected); support both id and populated object
+  const commenterId = (c) => String(c.userId?._id || c.userId || '')
+
+  // Comment like/dislike responses: { likescount } / { dislikeCount }
   const likeCommentHandler = async (commentId) => {
+    if (!token) return navigateToLogin()
     try {
-      const token = localStorage.getItem('token')
-      console.log("likeCommentHandler");
-      setCommentList(commentList.map((comment) => {
-        if (comment._id != commentId) {
-          return comment;
-        }
-        return {
-          ...comment,
-          isLike: !comment.isLike,
-          isDislike: comment.isDislike ? false : comment.isDislike
-        }
-
+      const res = await axios.post(`${api_base_url}/comment/likeComment/${commentId}`, {}, authHeaders)
+      setCommentList(list => list.map(c => c._id !== commentId ? c : {
+        ...c,
+        isLike: !c.isLike,
+        isDislike: false,
+        likeCount: res.data.likescount ?? res.data.likeCount ?? c.likeCount,
       }))
-
-      const likeRes = await axios.post(`${api_base_url}/comment/likeComment/${commentId}`, {}, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      })
-      console.log(likeRes.data.likeStatus);
-
-
     }
     catch (err) {
-      swal({
-        text: "Something is wrong!",
-        icon: "error",
-        button: "Ok",
-      });
+      showError(err)
     }
   }
 
   const dislikeCommentHandler = async (commentId) => {
+    if (!token) return navigateToLogin()
     try {
-      const token = localStorage.getItem('token')
-      console.log("dislikeCommentHandler");
-      setCommentList(commentList.map((comment) => {
-        if (comment._id != commentId) {
-          return comment;
-        }
-        return {
-          ...comment,
-          isDislike: !comment.isDislike,
-          isLike: comment.isLike ? false : comment.isLike
-        }
-
+      const res = await axios.post(`${api_base_url}/comment/dislikeComment/${commentId}`, {}, authHeaders)
+      setCommentList(list => list.map(c => c._id !== commentId ? c : {
+        ...c,
+        isDislike: !c.isDislike,
+        isLike: false,
+        dislikeCount: res.data.dislikeCount ?? c.dislikeCount,
       }))
-
-      const dislikeRes = await axios.post(`${api_base_url}/comment/dislikeComment/${commentId}`, {}, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      })
-      console.log(dislikeRes.data.dislikeStatus);
-
-
     }
     catch (err) {
-      swal({
-        text: "Something is wrong!",
-        icon: "error",
-        button: "Ok",
-      });
+      showError(err)
     }
   }
 
-  const deleteComment =async (commentId) => {
+  const deleteComment = async (commentId) => {
     try {
-      const token=localStorage.getItem('token')
-      console.log(commentId);
-      
-     const deleteConfirmation = await Swal.fire({
+      const confirmed = await swal({
         title: "Are you sure?",
         text: "You won't be able to revert this!",
         icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#3085d6",
-        cancelButtonColor: "#d33",
-        confirmButtonText: "Yes, delete it!"
+        buttons: ["Cancel", "Yes, delete it!"],
+        dangerMode: true,
       })
-      console.log(deleteConfirmation.isConfirmed);
-      
-      if(deleteConfirmation.isConfirmed){
-         await axios.delete(`${api_base_url}/comment/deleteComment/${commentId}`,{
-           headers: {
-          Authorization: `Bearer ${token}`
-        }
-         })
-           swal("comment deleted", "Comment deleted", "success");
-            getComment()
-      }
-     
-
-
+      if (!confirmed) return
+      await axios.delete(`${api_base_url}/comment/deleteComment/${commentId}`, authHeaders)
+      getComment()
     }
     catch (err) {
-      swal({
-        text: "Something is wrong!",
-        icon: "error",
-        button: "Ok",
-      });
-
+      showError(err)
     }
   }
 
-  const editComment=async(commentId)=>
-  {
-    try{
-      console.log('eddit comment',commentId);
-      
+  const editComment = async (c) => {
+    try {
+      const text = await swal({
+        text: "Edit your comment",
+        content: { element: "input", attributes: { defaultValue: c.commentText } },
+        buttons: ["Cancel", "Save"],
+      })
+      if (!text || !text.trim() || text === c.commentText) return
+      await axios.put(`${api_base_url}/comment/updateComment/${c._id}`, { comment: text }, authHeaders)
+      setCommentList(list => list.map(x => x._id === c._id ? { ...x, commentText: text } : x))
     }
-    catch(err){
-      swal({
-        text: "Something is wrong!",
-        icon: "error",
-        button: "Ok",
-      });
+    catch (err) {
+      showError(err)
     }
   }
 
@@ -317,33 +203,30 @@ const Video = () => {
           :
           <div className='video-left'>  <video src={video.videoUrl} controls className='video-player'></video>
             <h1 className='video-title'>{video.title}</h1>
-            <p>{video.views} views, {video.likeCount} likes</p>
+            <p>{video.views} views, {video.likeCount} likes, {video.dislikeCount || 0} dislikes</p>
             <div className='video-user-wrapper'>
               <div className='channel-info'>
                 <img className="user-profile" src={video.uploadedBy?.profilePicUrl ? video.uploadedBy.profilePicUrl : profile} />
                 <div>
-                  <p className='channelName'>{video.uploadedBy.channelName}</p>
+                  <p className='channelName'>{video.uploadedBy?.channelName}</p>
+                  <p>{video.subscribersCount || 0} subscribers</p>
                 </div>
               </div>
-              {video.uploadedBy?._id != localStorage.getItem('userId') && localStorage.getItem('token') && <div className='like-dislike-subscribe-wrapper'>
+              {video.uploadedBy?._id != userId && token && <div className='like-dislike-subscribe-wrapper'>
                 {!isLike && <span className='like-dislike' onClick={likeHandler}><i className="fa-regular fa-thumbs-up"></i></span>}
                 {isLike && <span className='like-dislike' onClick={likeHandler} ><i className="fa-solid fa-thumbs-up"></i></span>}
                 {!isDislike && <span className='like-dislike' onClick={dislikeHandler} ><i className="fa-regular fa-thumbs-down"></i></span>}
                 {isDislike && <span className='like-dislike' onClick={dislikeHandler}><i className="fa-solid fa-thumbs-down"></i></span>}
                 <button className='subscribe-btn' type='button' onClick={() => {
-                  subscribe(video.uploadedBy._id)
+                  subscribe(video.uploadedBy?._id)
                 }}>{!isSubscribe && <span><i className="fa-regular fa-bell"></i></span>}{!isSubscribe ? 'Subscribe' : 'Unsubscribe'}</button>
               </div>
 
               }
             </div>
-            <div
-              dangerouslySetInnerHTML={{
-                __html: video.description
-              }}
-            />
+            <p style={{ whiteSpace: 'pre-wrap' }}>{video.description}</p>
             <hr />
-            {localStorage.getItem('token') ? <div className='comment-wrapper'>
+            {token ? <div className='comment-wrapper'>
               <input onChange={(e) => { setComment(e.target.value) }} value={comment} className='comment-box' type="text" placeholder='write comment' />
               <button onClick={addComment} className='comment-btn' type='button'>{commentLoading && <span><i className="fa-solid fa-spinner fa-spin-pulse"></i></span>} Comment</button>
             </div> :
@@ -357,20 +240,18 @@ const Video = () => {
                    
                     
                     <div className='comment-user-info'>
-                      <img className='user-profile' src={c.commentBy?.profilePicUrl ? c.commentBy.profilePicUrl : profile} />
-                      <p>{c.commentBy?.channelName || "User"}</p>
+                      <img className='user-profile' src={c.userId?.profilePicUrl ? c.userId.profilePicUrl : profile} />
+                      <p>{c.userId?.channelName || "User"}</p>
                     </div>
 
                     <p className='commentText'>{c.commentText}</p>
-
+                    <p>{new Date(c.publishedAt).toLocaleDateString()}</p>
 
                     <div className='like-dislike-subscribe-wrapper'>
-                      {!c.isLike && <span className='like-dislike' onClick={() => { likeCommentHandler(c._id) }}><i className="fa-regular fa-thumbs-up"></i></span>}
-                      {c.isLike && <span className='like-dislike' onClick={() => { likeCommentHandler(c._id) }}><i className="fa-solid fa-thumbs-up"></i></span>}
-                      {!c.isDislike && <span className='like-dislike' onClick={() => { dislikeCommentHandler(c._id) }}><i className="fa-regular fa-thumbs-down"></i></span>}
-                      {c.isDislike && <span className='like-dislike' onClick={() => { dislikeCommentHandler(c._id) }}><i className="fa-solid fa-thumbs-down"></i></span>}
-                      {c.commentBy?._id == localStorage.getItem('userId') && <span onClick={()=>{editComment(c._id)}} ><i className="fa-solid fa-pen"></i></span>}
-                      {(c.commentBy?._id == localStorage.getItem('userId') || video.uploadedBy._id == localStorage.getItem('userId')) && <span  onClick={() => { deleteComment(c._id) }}><i className="fa-regular fa-trash-can"></i></span>}
+                      <span className='like-dislike' onClick={() => { likeCommentHandler(c._id) }}><i className={`${c.isLike ? 'fa-solid' : 'fa-regular'} fa-thumbs-up`}></i> {c.likeCount || 0}</span>
+                      <span className='like-dislike' onClick={() => { dislikeCommentHandler(c._id) }}><i className={`${c.isDislike ? 'fa-solid' : 'fa-regular'} fa-thumbs-down`}></i> {c.dislikeCount || 0}</span>
+                      {token && commenterId(c) === userId && <span onClick={() => { editComment(c) }}><i className="fa-solid fa-pen"></i></span>}
+                      {token && (commenterId(c) === userId || video.uploadedBy?._id === userId) && <span onClick={() => { deleteComment(c._id) }}><i className="fa-regular fa-trash-can"></i></span>}
                     </div>
 
                   </div>

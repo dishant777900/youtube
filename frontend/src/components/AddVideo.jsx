@@ -5,9 +5,7 @@ import swal from 'sweetalert'
 
 const AddVideo = () => {
     const [title, setTitle] = useState("")
-    const [tags, setTags] = useState("")
     const [description, setDescription] = useState("")
-    const [category, setCategory] = useState("education")
     const [video, setVideo] = useState(null)
     const [videoName, setVideoName] = useState(null)
     const [isLoading, setLoading] = useState(false)
@@ -39,24 +37,25 @@ const AddVideo = () => {
     const submitHandler = async (e) => {
         try {
             e.preventDefault()
+            if (!video || !thumbnail) {
+                swal({ text: "Please choose both a video and a thumbnail", icon: "warning", button: "Ok" })
+                return
+            }
             setLoading(true)
             const token = localStorage.getItem("token");
             const formData = new FormData()
             formData.append("title", title)
             formData.append("description", description)
-            formData.append("tags", tags);
-            formData.append("category", category);
             formData.append("video", video)
             formData.append("thumbnail", thumbnail)
-            console.log("TOKEN:", token);
 
             await axios.post(`${api_base_url}/video/upload`, formData, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
             })
-            navigate('/')
             setLoading(false)
+            navigate('/')
 
             swal({
                 text: "Video uploaded!",
@@ -70,7 +69,7 @@ const AddVideo = () => {
             console.log(err);
             setLoading(false)
             swal({
-                text: "Something is wrong!",
+                text: err.response?.data?.error || "Something is wrong!",
                 icon: "error",
                 button: "Ok",
             });
@@ -105,22 +104,9 @@ const AddVideo = () => {
 
                 </div>
 
-                <input className="form-input" onChange={(e) => { setTitle(e.target.value) }} type="text" placeholder="title" />
+                <input className="form-input" required onChange={(e) => { setTitle(e.target.value) }} type="text" placeholder="title" />
 
                 <textarea className="form-input" onChange={(e) => { setDescription(e.target.value) }} maxLength={2000} minLength={20} placeholder="descritption" />
-
-                <input className="form-input" onChange={(e) => { setTags(e.target.value) }} placeholder="tags" />
-
-                <select className="form-input" onChange={(e) => { setCategory(e.target.value) }}>
-                    <option value={'Education'}>Education
-                    </option>
-                    <option value={'Fashion'}>Fashion</option>
-                    <option value={'Comedy'}>Comedy</option>
-                    <option value={'Food'}>Food</option>
-                    <option value={'Technology'}>Technology</option>
-                    <option value={'Gaming'}>Gaming</option>
-                    <option value={'Other'}>Other</option>
-                </select>
                 <button type="submit" className="submit-btn" >{isLoading && <span> <i className="fa-solid fa-spinner fa-spin-pulse"></i></span>} Upload</button>
             </form>
         </div>

@@ -1,26 +1,30 @@
-import { Route, Routes } from "react-router-dom"
-import NavBar from "./component/NavBar"
-import Home from "./component/Home"
-import Login from "./component/Login"
-import Signup from "./component/Signup"
-import AddVideo from "./component/AddVideo"
-import Video from "./component/Video"
-
-const App=()=>{
-
-  return(
-
-    <Routes>
-      <Route path="/" element={<NavBar/>}>
-        <Route path="" element={<Home/>}/>
-        <Route path="Upload-video" element={<AddVideo/>}/>
-        <Route path="login" element={<Login/>}/>
-       <Route path="video/:id" element={<Video/>}/>
-        <Route path="signup" element={<Signup/>}/>
-      </Route>
-    </Routes>
+import { Route, Routes } from 'react-router-dom'
+import './App.css'
+import NavBar from './components/NavBar'
+import Home from './components/Home'
+import Login from './components/Login'
+import Signup from './components/Signup'
+import Profile from './components/Profile'
+import AddVideo from './components/AddVideo'
+// import ChannelVideo from './components/ChannelVideo'
+import Video from './components/Video'
+const App = () => {
+  return (
+    <div>
+      <Routes>
+        <Route path='/' element={<NavBar />}>
+          <Route path='' element={<Home/>}/>
+          <Route path='home' element={<Home />} />
+          <Route path='login' element={<Login />} />
+          <Route path='signup' element = {<Signup/>}/>
+          <Route path = 'profile' element = {<Profile/>}/>
+          <Route path='add-video' element = {<AddVideo/>}/>
+          {/* <Route path='channel-video' element = {<ChannelVideo/>}/> */}
+          <Route path='video/:id' element = {<Video/>}/>
+        </Route>
+      </Routes>
+    </div>
   )
 }
-
 
 export default App

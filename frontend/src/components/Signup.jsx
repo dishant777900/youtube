@@ -57,7 +57,7 @@ const Signup = () => {
             console.log(err);
             setLoading(false)
             swal({
-                text: "Something is wrong!",
+                text: err.response?.data?.error?.toString() || "Something is wrong!",
                 icon: "error",
                 button: "Ok",
             });
