@@ -24,6 +24,7 @@ const Home = () => {
             setAllvideo((videos.data.videos || []).slice().reverse())
         }
         catch (err) {
+
             swal({
                 text: "Something is wrong!",
                 icon: "error",
@@ -42,13 +43,18 @@ const Home = () => {
                     allVideo.map(video => {
                         return (
                             <div className='video-card' key={video._id} onClick={() => { navigate(`/video/${video._id}`) }} >
+
+
+
                                 <img className="video-thumbnail" src={video.thumbnailUrl}
                                     alt="thumbnail" />
+
+
 
                                 <div className='video-detail'>
                                     <h1>{video.title}</h1>
                                     <div>
-                                        <div className='profile-box'>
+                                        <div className='profile-box' onClick={(e) => { e.stopPropagation(); navigate(`/profile/${video.uploadedBy?._id}`) }}>
                                             <img
                                                 className='user-profile'
                                                 src={

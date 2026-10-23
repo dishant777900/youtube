@@ -331,3 +331,29 @@
   /* background-color: red; */
   overflow:auto;
 }
+
+/* ---------- Profile page ---------- */
+.pf-wrapper { max-width: 1100px; margin: 0 auto; padding: 24px; display: flex; flex-direction: column; gap: 24px; box-sizing: border-box; }
+.pf-cover { height: 200px; border-radius: 16px; background: #2b3a55 center / cover no-repeat; display: flex; align-items: flex-end; justify-content: flex-end; padding: 16px; box-sizing: border-box; }
+.pf-header { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; }
+.pf-avatar-wrap { position: relative; width: 128px; height: 128px; flex-shrink: 0; }
+.pf-avatar { width: 128px; height: 128px; border-radius: 50%; object-fit: cover; }
+.pf-avatar-edit { position: absolute; right: 0; bottom: 0; width: 44px; height: 44px; border-radius: 50%; border: 2px solid #fff; background: #0f0f0f; color: #fff; cursor: pointer; }
+.pf-info { display: flex; flex-direction: column; gap: 8px; flex: 1 1 320px; min-width: 0; }
+.pf-info h1 { margin: 0; font-size: 32px; }
+.pf-meta { font-size: 14px; color: #606060; }
+.pf-desc { margin: 0; font-size: 14px; color: #404040; max-width: 640px; white-space: pre-wrap; }
+.pf-actions { display: flex; gap: 12px; margin-top: 4px; flex-wrap: wrap; }
+.pf-btn { min-height: 44px; padding: 0 18px; border-radius: 22px; border: 0; font-size: 14px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
+.pf-btn:disabled { opacity: .6; cursor: default; }
+.pf-btn-dark { background: #0f0f0f; color: #fff; }
+.pf-btn-light { background: #f0f0f0; color: #0f0f0f; }
+.pf-btn-danger { background: #fdeceb; color: #b42318; }
+.pf-tab { padding: 12px 16px; font-size: 14px; font-weight: 600; border-bottom: 3px solid #0f0f0f; width: fit-content; }
+.pf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 24px 16px; }
+.pf-card { display: flex; flex-direction: column; gap: 8px; }
+.pf-thumb { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 12px; cursor: pointer; background: #e5e5e5; }
+.pf-card-title { font-size: 15px; font-weight: 600; cursor: pointer; }
+.pf-card-meta { font-size: 13px; color: #606060; }
+.pf-card-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.pf-empty { color: #606060; }
