@@ -2,6 +2,7 @@ const User = require('../models/User')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const cloudinary = require('../config/cloudinary')
+const Video = require('../models/Video')
 
 const signup = async (req, res) => {
     try {
@@ -175,14 +176,15 @@ const uploadProfile = async(req,res)=>{
 
         await user.save()
         res.status(200).json({
-            msg:'profile pic updated'
+            msg:'profile pic updated',
+            profilePicUrl:user.profilePicUrl
         })
     }
     catch(err)
     {
         console.log(err)
         res.status(500).json({
-
+            error: err.message
         })
     }
 }
@@ -205,21 +207,62 @@ const uploadCoverProfilePic = async(req,res)=>{
 
         await user.save()
         res.status(200).json({
-            msg:'cover pic updated'
+            msg:'cover pic updated',
+            coverPicUrl:user.coverPicUrl
         })
     }
     catch(err)
     {
         console.log(err)
         res.status(500).json({
-
+            error: err.message
         })
     }
 }
 
+// public channel profile
+const getProfile = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id)
+            .select('channelName description profilePicUrl coverPicUrl subscribers subscribedTo createdAt')
+        if (!user) {
+            return res.status(404).json({ error: 'channel not found' })
+        }
 
+        let isSubscribed = false
+        const authHeader = req.headers.authorization
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            try {
+                const tokenData = jwt.verify(authHeader.split(' ')[1], process.env.SEC_KEY)
+                isSubscribed = user.subscribers.some(id => id.toString() === tokenData._id.toString())
+            } catch (e) { /* invalid token: treat as logged out */ }
+        }
+
+        const videoCount = await Video.countDocuments({ uploadedBy: user._id })
+
+        res.status(200).json({
+            user: {
+                _id: user._id,
+                channelName: user.channelName,
+                description: user.description,
+                profilePicUrl: user.profilePicUrl,
+                coverPicUrl: user.coverPicUrl,
+                createdAt: user.createdAt,
+                subscribersCount: user.subscribers.length,
+                subscribedToCount: user.subscribedTo.length,
+                videoCount,
+                isSubscribed
+            }
+        })
+    }
+    catch (err) {
+        console.log(err)
+        res.status(500).json({ error: err.message })
+    }
+}
 
 module.exports = {
+    getProfile,
     signup,
     login,
     subscribe,

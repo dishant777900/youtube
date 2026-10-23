@@ -17,7 +17,8 @@ const App = () => {
           <Route path='home' element={<Home />} />
           <Route path='login' element={<Login />} />
           <Route path='signup' element = {<Signup/>}/>
-          <Route path = 'profile' element = {<Profile/>}/>
+          <Route path='profile' element={<Profile/>}/>
+          <Route path='profile/:id' element={<Profile/>}/>
           <Route path='add-video' element = {<AddVideo/>}/>
           {/* <Route path='channel-video' element = {<ChannelVideo/>}/> */}
           <Route path='video/:id' element = {<Video/>}/>

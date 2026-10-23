@@ -68,6 +68,20 @@ const allVideo = async (req, res) => {
     }
 };
 
+// get all videos of one channel
+const channelVideos = async (req, res) => {
+    try {
+        const videos = await Video.find({ uploadedBy: req.params.id })
+            .select("_id title thumbnailUrl publishedAt views likeCount")
+            .sort({ publishedAt: -1 });
+
+        res.status(200).json({ videos });
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
 // get video by id
 const getVideo = async (req, res) => {
     try {
@@ -455,4 +469,12 @@ const deleteVideo = async (req, res) => {
     }
 };
 
-module.exports = {upload,allVideo,getVideo,likeVideo,dislikeVideo,updateThumbnail,deleteVideo}
+module.exports = {upload,
+    allVideo,
+    channelVideos,
+    getVideo,
+    likeVideo,
+    dislikeVideo,
+    updateThumbnail,
+    deleteVideo
+}

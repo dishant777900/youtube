@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { upload, allVideo, getVideo, likeVideo, dislikeVideo, updateThumbnail, deleteVideo } = require('../controllers/videoController');
+const { upload, allVideo, getVideo, likeVideo, dislikeVideo, updateThumbnail, deleteVideo, channelVideos } = require('../controllers/videoController');
 
 router.post('/upload', upload);
 router.get('/allVideo',allVideo)
@@ -10,5 +10,6 @@ router.post('/likeVideo/:videoId',likeVideo)
 router.post('/dislike/:videoId',dislikeVideo)
 router.put('/updateThumbnail/:videoId',updateThumbnail)
 router.delete('/delete/:videoId',deleteVideo)
+router.get('/channel/:id', channelVideos);
 
 module.exports = router;
